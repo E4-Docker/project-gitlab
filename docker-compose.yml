@@ -2,8 +2,9 @@ services:
   gitlab:
     image: 'gitlab/gitlab-ee:latest'
     hostname: ${GITLAB_HOSTNAME}
-    shm_size: '16g'
+    shm_size: ${SHM_SIZE}
     environment:
+      SHM_SIZE: ${SHM_SIZE}
       GITLAB_HOSTNAME: ${GITLAB_HOSTNAME}
       GITLAB_REGISTRY_HOSTNAME: ${GITLAB_REGISTRY_HOSTNAME}
       GITLAB_HTTP_PORT: ${GITLAB_HTTP_PORT}
