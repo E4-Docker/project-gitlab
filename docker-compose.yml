@@ -18,10 +18,12 @@ services:
 
         # Gitlab
         external_url 'https://${GITLAB_HOSTNAME}'
+        nginx['listen_port'] = 80
         nginx['listen_https'] = false
 
         # Registry
         registry_external_url 'https://${GITLAB_REGISTRY_HOSTNAME}'
+        registry_nginx['listen_port'] = 5050
         registry_nginx['listen_https'] = false
 
         # OmniAuth
