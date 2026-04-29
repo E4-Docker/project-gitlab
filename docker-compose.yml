@@ -1,0 +1,61 @@
+services:
+  gitlab:
+    image: 'gitlab/gitlab-ee:latest'
+    hostname: ${GITLAB_HOSTNAME}
+    shm_size: '16g'
+    environment:
+      GITLAB_HOSTNAME: ${GITLAB_HOSTNAME}
+      GITLAB_REGISTRY_HOSTNAME: ${GITLAB_REGISTRY_HOSTNAME}
+      GITLAB_HTTP_PORT: ${GITLAB_HTTP_PORT}
+      GITLAB_SSH_PORT: ${GITLAB_SSH_PORT}
+      GITLAB_REGISTRY_PORT: ${GITLAB_REGISTRY_PORT}
+      GITLAB_HOME: ${GITLAB_HOME}
+      GITLAB_TIMEZONE: Asia/Seoul
+      GITLAB_OMNIBUS_CONFIG: |
+        # 역방향 프록시 사용
+        letsencrypt['enable'] = false
+
+        # Gitlab
+        external_url 'https://${GITLAB_HOSTNAME}'
+        nginx['listen_https'] = false
+
+        # Registry
+        registry_external_url 'https://${GITLAB_REGISTRY_HOSTNAME}'
+        registry_nginx['listen_https'] = false
+
+        # OmniAuth
+        gitlab_rails['omniauth_enabled'] = true
+        gitlab_rails['omniauth_auto_link_user'] = ['github']
+        gitlab_rails['omniauth_allow_single_sign_on'] = ['github']
+        gitlab_rails['omniauth_block_auto_created_users'] = false
+        gitlab_rails['omniauth_providers'] = [
+          {
+            name: "github",
+            # Docker secrets에서 키 읽기 (Ruby 문법)
+            app_id: File.read('/run/secrets/github_app_id').strip,
+            app_secret: File.read('/run/secrets/github_app_secret').strip,
+            args: { scope: "user:email,repo" }
+          }
+        ]
+    secrets:
+      - source: gitlab_self-managed_client_id
+        target: github_app_id
+      - source: gitlab_self-managed_client_secrets
+        target: github_app_secret
+    ports:
+      - '${GITLAB_HTTP_PORT}:80'
+      - '${GITLAB_SSH_PORT}:22'
+      - '${GITLAB_REGISTRY_PORT}:5050'
+    volumes:
+      - '${GITLAB_HOME}/config:/etc/gitlab'
+      - '${GITLAB_HOME}/logs:/var/log/gitlab'
+      - '${GITLAB_HOME}/data:/var/opt/gitlab'
+    deploy:
+      placement:
+        constraints: [ node.role == manager ]
+
+secrets:
+  gitlab_self-managed_client_id:
+    external: true
+  gitlab_self-managed_client_secrets:
+    external: true
